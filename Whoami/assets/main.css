@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+html {
+  @apply bg-primarywhite-200;
+  scroll-behavior: smooth;
+}
