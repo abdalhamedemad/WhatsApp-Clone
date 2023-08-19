@@ -2,22 +2,22 @@ import { defineStore } from "pinia";
 import { useFetch } from "@vueuse/core";
 export const useCounterStore = defineStore("counter", () => {
   const userData = ref([
-    {
-      userName: "John Doe",
-      lastMessage:
-        "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, voluptatum.",
-      lastMessageTime: "12:00",
-      unReadMessageNum: 2,
-      phoneNumber: "+91 1234567890",
-    },
-    {
-      userName: "Mark joe",
-      lastMessage:
-        "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, voluptatum.",
-      lastMessageTime: "12:22",
-      unReadMessageNum: 10,
-      phoneNumber: "+91 1234567890",
-    },
+    // {
+    //   userName: "John Doe",
+    //   lastMessage:
+    //     "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, voluptatum.",
+    //   lastMessageTime: "12:00",
+    //   unReadMessageNum: 2,
+    //   phoneNumber: "+91 1234567890",
+    // },
+    // {
+    //   userName: "Mark joe",
+    //   lastMessage:
+    //     "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, voluptatum.",
+    //   lastMessageTime: "12:22",
+    //   unReadMessageNum: 10,
+    //   phoneNumber: "+91 1234567890",
+    // },
   ]);
   const activeChat = ref({
     userName: "John Doe",

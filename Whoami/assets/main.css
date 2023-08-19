@@ -4,4 +4,5 @@
 html {
   @apply bg-primarywhite-200;
   scroll-behavior: smooth;
+  color: #000000;
 }

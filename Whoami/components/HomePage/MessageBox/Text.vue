@@ -27,7 +27,7 @@ const props = defineProps({
         props.messageData.isMe ? 'me-send' : 'you-send'
       } flex relative pl-[6px] pt-[6px] pr-[6px] pb-[20px]`"
     >
-      <p class="flex flex-wrap text-[14px]">
+      <p class="flex flex-wrap text-[14px] break-all">
         {{ props.messageData.message }}
       </p>
       <p class="absolute bottom-0 right-0 text-[11px] pr-[5px] pb-[3px]">

@@ -8,6 +8,7 @@ import { useCounterStore } from "~/stores/appStore.ts";
 import { useUtils } from "~/composables/useUtils.js";
 const store = useCounterStore();
 const { socketComposable } = useUtils();
+let typingShow = ref(false);
 let socket = null;
 onMounted(async () => {
   socket = await socketComposable();
@@ -25,6 +26,12 @@ onMounted(async () => {
       groupMessage: false,
       senderName: "New Name",
     });
+  });
+  socket.on("typing", () => {
+    typingShow.value = true;
+    setTimeout(() => {
+      typingShow.value = false;
+    }, 1000);
   });
 });
 
@@ -77,6 +84,12 @@ onKeyStroke("Enter", (e) => {
     to: store.activeChat.userId,
   });
 });
+function typing() {
+  console.log("typing", store.activeChat.userId);
+  socket.emit("typing", {
+    to: store.activeChat.userId,
+  });
+}
 // Socket.emit("messageChannel", (data) => {
 //   console.log(data);
 //   messageData2.value.push({
@@ -107,7 +120,7 @@ onKeyStroke("Enter", (e) => {
         </div>
         <div class="user-group-name flex items-center">
           <h3 class="inline-block text-[17px] font-semibold">
-            {{ store.activeChat.userName }}
+            {{ store.activeChat.userName }} {{ typingShow ? "typing..." : "" }}
           </h3>
           <span class="flex-grow"></span>
           <!-- <p class="inline-block text-[12px]">2:22 pm</p> -->
@@ -148,6 +161,7 @@ onKeyStroke("Enter", (e) => {
           class="search-box w-full h-[40px] px-[16px] bg-[#fff] rounded-md focus:outline-none"
           type="text"
           v-model="enteredMessage"
+          @keyup="typing()"
         />
       </div>
       <div class="icons">
