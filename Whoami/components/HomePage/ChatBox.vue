@@ -1,7 +1,58 @@
 <script setup>
-import { ref } from "vue";
-const userImage = ref("");
-const unReadMessageNum = ref(0);
+const props = defineProps({
+  userData: {
+    userImage: {
+      type: String,
+      default: "http://localhost:3000/defaultUserImage.png",
+    },
+    unReadMessageNum: {
+      type: Number,
+      default: 0,
+    },
+    userName: {
+      type: String,
+      default: "",
+    },
+    lastMessage: {
+      type: String,
+      default: "",
+    },
+    lastMessageTime: {
+      type: String,
+      default: "",
+    },
+    phoneNumber: {
+      type: String,
+      default: "",
+    },
+  },
+});
+const items = [
+  [
+    {
+      label: "Archive chat",
+    },
+  ],
+  [
+    {
+      label: "Mute notifications",
+      click: () => {
+        console.log("Edit");
+      },
+    },
+    {
+      label: "Delete chat",
+    },
+  ],
+  [
+    {
+      label: "Pin chat",
+    },
+    {
+      label: "Mark as unread",
+    },
+  ],
+];
 </script>
 <template>
   <div>
@@ -12,8 +63,8 @@ const unReadMessageNum = ref(0);
         <img
           class="w-[40px] h-[40px] border-50per"
           :src="
-            userImage.length != 0
-              ? userImage
+            props.userData.userImage
+              ? props.userData.userImage
               : 'http://localhost:3000/defaultUserImage.png'
           "
           alt=""
@@ -21,22 +72,38 @@ const unReadMessageNum = ref(0);
       </div>
       <div class="content flex flex-col flex-grow">
         <div class="user-group-name flex items-center">
-          <h3 class="inline-block text-[17px] font-semibold">New Name</h3>
+          <h3 class="inline-block text-[17px] font-semibold">
+            {{
+              props.userData.userName
+                ? props.userData.userName
+                : props.userData.phoneNumber
+            }}
+          </h3>
           <span class="flex-grow"></span>
-          <p class="inline-block text-[12px]">2:22 pm</p>
+          <p class="inline-block text-[12px]">
+            {{ props.userData.lastMessageTime }}
+          </p>
         </div>
         <div class="user-group-description flex justify-between items-center">
           <p class="inline-block text-[14px] overflow-hidden">
-            the last message the last messagethe last messagethe last messagethe
+            <!-- the last message the last messagethe last messagethe last messagethe -->
+            {{ props.userData.lastMessage }}
           </p>
           <span class="flex items-center">
-            <span class="rotate-90 text-[20px] text-[#54656f]">
-              <font-awesome-icon :icon="['fas', 'angle-right']" />
+            <span class="text-[20px] text-[#54656f]">
+              <UDropdown :items="items" :popper="{ placement: 'bottom-start' }">
+                <font-awesome-icon
+                  class="rotate-90"
+                  :icon="['fas', 'angle-right']"
+                />
+                <!-- <font-awesome-icon :icon="['fas', 'bars']" /> -->
+              </UDropdown>
             </span>
             <span
               class="w-[20px] h-[20px] border-50per bg-[#00a884] flex items-center justify-center text-[#fff] ml-[16px]"
-              >9</span
             >
+              {{ props.userData.unReadMessageNum }}
+            </span>
           </span>
         </div>
       </div>

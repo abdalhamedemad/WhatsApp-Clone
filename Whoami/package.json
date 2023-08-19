@@ -21,6 +21,13 @@
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@fortawesome/vue-fontawesome": "^3.0.3",
     "@nuxtjs/fontawesome": "^1.1.2",
-    "@vueuse/nuxt": "^10.3.0"
+    "@pinia/nuxt": "^0.4.11",
+    "@vueuse/nuxt": "^10.3.0",
+    "nuxt-socket-io": "^3.0.13",
+    "pinia": "^2.1.6",
+    "socket.io-client": "^4.7.2"
+  },
+  "overrides": {
+    "vue": "latest"
   }
 }

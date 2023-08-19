@@ -1,26 +1,92 @@
 <script setup>
+import { onKeyStroke } from "@vueuse/core";
+// import { Socket } from "net";
+// import VEmojiPicker from 'v-emoji-picker';
+// import packData from 'v-emoji-picker/data/emojis.json';
+
+import { useCounterStore } from "~/stores/appStore.ts";
+import { useUtils } from "~/composables/useUtils.js";
+const store = useCounterStore();
+const { socketComposable } = useUtils();
+let socket = null;
+onMounted(async () => {
+  socket = await socketComposable();
+  console.log(socketComposable());
+  socket.on("connect", () => {
+    console.log("socket connect", socket.id); // x8WIv7-mJelg7on_ALbx
+  });
+  socket.emit("add-user", localStorage.getItem("userId"));
+  socket.on("messageChannel", (data) => {
+    console.log(data);
+    messageData2.value.push({
+      body: data.message,
+      me: false,
+      time: "2:22 pm",
+      groupMessage: false,
+      senderName: "New Name",
+    });
+  });
+});
+
 const userImage = ref("");
 const enteredMessage = ref("");
-const messageData2 = ref([
-  {
-    message: "wmptylnknijnoijoij",
-    isMe: false,
-    time: "2:22 pm",
-    groupMessage: false,
-    senderName: "New Name",
-  },
-]);
+// const messageData2 = ref([
+//   {
+//     message: "wmptylnknijnoijoij",
+//     isMe: false,
+//     time: "2:22 pm",
+//     groupMessage: false,
+//     senderName: "New Name",
+//   },
+// ]);
+const messageData2 = ref(store.activeChat.messages);
+
+//  watch changes in active chat
+// watch(
+//   () => store.activeChat,
+//   (newValue, oldValue) => {
+//     console.log(newValue);
+//     messageData2.value = newValue.messages;
+//   }
+// );
+watchEffect(() => {
+  messageData2.value = store.activeChat.messages;
+});
 function sendMessage() {
   console.log(enteredMessage.value);
+
+  console.log("messageData2", messageData2);
   messageData2.value.push({
-    message: enteredMessage.value,
-    isMe: true,
+    body: enteredMessage.value,
+    me: true,
     time: "2:22 pm",
     groupMessage: false,
     senderName: "New Name",
   });
   enteredMessage.value = "";
 }
+
+onKeyStroke("Enter", (e) => {
+  // e.preventDefault()
+  const message = enteredMessage.value;
+  sendMessage();
+  // console.log(message);
+  store.sendMessage(message, store.activeChat.userId);
+  socket.emit("send-msg", {
+    message: message,
+    to: store.activeChat.userId,
+  });
+});
+// Socket.emit("messageChannel", (data) => {
+//   console.log(data);
+//   messageData2.value.push({
+//     message: data.message,
+//     isMe: false,
+//     time: "2:22 pm",
+//     groupMessage: false,
+//     senderName: "New Name",
+//   });
+// });
 </script>
 <template>
   <div class="relative h-full">
@@ -40,7 +106,9 @@ function sendMessage() {
           />
         </div>
         <div class="user-group-name flex items-center">
-          <h3 class="inline-block text-[17px] font-semibold">New Name</h3>
+          <h3 class="inline-block text-[17px] font-semibold">
+            {{ store.activeChat.userName }}
+          </h3>
           <span class="flex-grow"></span>
           <!-- <p class="inline-block text-[12px]">2:22 pm</p> -->
         </div>
@@ -52,17 +120,17 @@ function sendMessage() {
         <span><font-awesome-icon :icon="['fas', 'bars']" /></span>
       </div>
     </header>
-    <section class="ch overflow-auto mb-[62px]">
+    <section class="ch overflow-auto mb-[62px] pt-[20px]">
       <!-- <HomePageMessageBoxText :isMe="false" , /> -->
       <!-- <HomePageMessageBoxText :isMe="true" /> -->
       <HomePageMessageBoxText
         v-for="(message, index) in messageData2"
         :key="index"
         :messageData="{
-          message: message.message,
-          isMe: message.isMe,
-          time: message.time,
-          groupMessage: message.groupMessage,
+          message: message.body,
+          isMe: message.me,
+          time: message.time ? message.time : '2:22 pm',
+          groupMessage: message.groupMessage ? message.groupMessage : false,
         }"
       />
     </section>
