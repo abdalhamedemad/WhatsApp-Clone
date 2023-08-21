@@ -1,24 +1,7 @@
 import { defineStore } from "pinia";
 import { useFetch } from "@vueuse/core";
 export const useCounterStore = defineStore("counter", () => {
-  const userData = ref([
-    // {
-    //   userName: "John Doe",
-    //   lastMessage:
-    //     "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, voluptatum.",
-    //   lastMessageTime: "12:00",
-    //   unReadMessageNum: 2,
-    //   phoneNumber: "+91 1234567890",
-    // },
-    // {
-    //   userName: "Mark joe",
-    //   lastMessage:
-    //     "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, voluptatum.",
-    //   lastMessageTime: "12:22",
-    //   unReadMessageNum: 10,
-    //   phoneNumber: "+91 1234567890",
-    // },
-  ]);
+  const userData = ref([]);
   const activeChat = ref({
     userName: "John Doe",
     lastMessage:
@@ -28,12 +11,6 @@ export const useCounterStore = defineStore("counter", () => {
     phoneNumber: "+91 1234567890",
     messages: [],
   });
-  // const name = ref("Eduardo");
-  // const doubleCount = computed(() => count.value * 2);
-
-  // function increment() {
-  //   // count.value++;
-  // }
   function setActiveChat(chat: any) {
     console.log(activeChat.value);
     console.log(chat);
@@ -113,7 +90,21 @@ export const useCounterStore = defineStore("counter", () => {
       return false;
     }
   }
-  async function sendMessage(message: string, toId: string) {
+  async function sendMessage(message: any, toId: string, messageType: string) {
+    let body: any = "";
+    if (messageType === "record") {
+      const formData = new FormData();
+      //add the Blob to formData
+      formData.append("record", message, "recording.mp3");
+      body = formData;
+    } else {
+      body = JSON.stringify({
+        message,
+        userId: localStorage.getItem("userId"),
+        token: localStorage.getItem("token"),
+        toId,
+      });
+    }
     const { isFetching, data, error } = await useFetch(
       "http://localhost:8080/feed/send-message",
       {
@@ -121,12 +112,7 @@ export const useCounterStore = defineStore("counter", () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          message,
-          userId: localStorage.getItem("userId"),
-          token: localStorage.getItem("token"),
-          toId,
-        }),
+        body,
       }
     ).json();
     console.log(data);

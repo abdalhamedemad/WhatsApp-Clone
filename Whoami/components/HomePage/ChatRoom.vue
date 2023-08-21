@@ -1,16 +1,16 @@
 <script setup>
 import { onKeyStroke } from "@vueuse/core";
-// import { Socket } from "net";
-// import VEmojiPicker from 'v-emoji-picker';
-// import packData from 'v-emoji-picker/data/emojis.json';
-
 import { useCounterStore } from "~/stores/appStore.ts";
 import { useUtils } from "~/composables/useUtils.js";
+import { useDevicesList, useUserMedia } from "@vueuse/core";
 const store = useCounterStore();
 const { socketComposable } = useUtils();
 let typingShow = ref(false);
 let socket = null;
+// const audioElement = ref(null);
+// let audio = null;
 onMounted(async () => {
+  // audio = audioElement.value;
   socket = await socketComposable();
   console.log(socketComposable());
   socket.on("connect", () => {
@@ -33,56 +33,47 @@ onMounted(async () => {
       typingShow.value = false;
     }, 1000);
   });
+  // watchEffect(() => {
+  //   // preview on a video element
+  //   audio.srcObject = stream.value;
+  // });
 });
+
+/*//////////////////////////////// */
 
 const userImage = ref("");
 const enteredMessage = ref("");
-// const messageData2 = ref([
-//   {
-//     message: "wmptylnknijnoijoij",
-//     isMe: false,
-//     time: "2:22 pm",
-//     groupMessage: false,
-//     senderName: "New Name",
-//   },
-// ]);
 const messageData2 = ref(store.activeChat.messages);
-
-//  watch changes in active chat
-// watch(
-//   () => store.activeChat,
-//   (newValue, oldValue) => {
-//     console.log(newValue);
-//     messageData2.value = newValue.messages;
-//   }
-// );
 watchEffect(() => {
   messageData2.value = store.activeChat.messages;
 });
+const sendRecord = ref(false);
 function sendMessage() {
-  console.log(enteredMessage.value);
-
-  console.log("messageData2", messageData2);
-  messageData2.value.push({
-    body: enteredMessage.value,
-    me: true,
-    time: "2:22 pm",
-    groupMessage: false,
-    senderName: "New Name",
-  });
-  enteredMessage.value = "";
+  if (sendRecord.value) {
+    sendRecord.value = false;
+    audioRecording.value = false;
+  } else {
+    const message = enteredMessage.value;
+    console.log(enteredMessage.value);
+    console.log("messageData2", messageData2);
+    messageData2.value.push({
+      body: enteredMessage.value,
+      me: true,
+      time: "2:22 pm",
+      groupMessage: false,
+      senderName: "New Name",
+    });
+    enteredMessage.value = "";
+    store.sendMessage(message, store.activeChat.userId, "text");
+    socket.emit("send-msg", {
+      message: message,
+      to: store.activeChat.userId,
+    });
+  }
 }
 
 onKeyStroke("Enter", (e) => {
-  // e.preventDefault()
-  const message = enteredMessage.value;
   sendMessage();
-  // console.log(message);
-  store.sendMessage(message, store.activeChat.userId);
-  socket.emit("send-msg", {
-    message: message,
-    to: store.activeChat.userId,
-  });
 });
 function typing() {
   console.log("typing", store.activeChat.userId);
@@ -90,18 +81,71 @@ function typing() {
     to: store.activeChat.userId,
   });
 }
-// Socket.emit("messageChannel", (data) => {
-//   console.log(data);
-//   messageData2.value.push({
-//     message: data.message,
-//     isMe: false,
-//     time: "2:22 pm",
-//     groupMessage: false,
-//     senderName: "New Name",
-//   });
-// });
+//////////////////RECORDING aud////////////////////////
+const audioRecording = ref(false);
+const audioElement = ref(null);
+let mediaStream = null;
+let mediaRecorder = null;
+// define a blob to hold the recording data
+let blob = null;
+const startRecording = async () => {
+  try {
+    sendRecord.value = false;
+    audioRecording.value = true;
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(mediaStream);
+    mediaRecorder.start();
+    mediaRecorder.ondataavailable = async (e) => {
+      blob = e.data;
+      console.log("data available", e.data);
+      const audioURL = URL.createObjectURL(e.data);
+
+      console.log(audioURL);
+      audioElement.value.src = audioURL;
+      await saveRecording();
+    };
+  } catch (error) {
+    audioRecording.value = false;
+    console.error("Error accessing camera:", error);
+  }
+};
+async function saveRecording() {
+  //the form data that will hold the Blob to upload
+  // const formData = new FormData();
+  // formData.append("record", blob, "recording.mp3");
+  // console.log("fetching data");
+  // const { isFetching, data, error } = await useFetch(
+  //   "http://localhost:8080/feed/record",
+  //   {
+  //     method: "POST",
+  //     body: formData,
+  //   }
+  // ).json();
+  // console.log(isFetching, "isffff");
+  store.sendMessage(blob, store.activeChat.userId, "record");
+  socket.emit("send-msg", {
+    message: record,
+    to: store.activeChat.userId,
+  });
+}
+
+function stopRecording() {
+  audioRecording.value = false;
+  sendRecord.value = true;
+  console.log("blob", blob);
+
+  mediaStream.getTracks().forEach((track) => track.stop());
+}
+onBeforeUnmount(() => {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach((track) => track.stop());
+  }
+});
+
+//////////////////////////////////////////////////
 </script>
 <template>
+  <!-- <audio src="" ref="audioElement"></audio> -->
   <div class="relative h-full">
     <header
       class="h-[72px] w-full bg-[#f0f2f5] py-[10px] px-[16px] border-solid border-l-[1px] border-[#e9edef] flex items-center justify-between"
@@ -146,6 +190,13 @@ function typing() {
           groupMessage: message.groupMessage ? message.groupMessage : false,
         }"
       />
+      <HomePageMessageBoxVoice
+        :audioData="blob"
+        :messageData="{
+          isMe: true,
+          time: '2:22 pm',
+        }"
+      />
     </section>
     <footer
       class="absolute left-0 bottom-0 w-full h-[62px] bg-[#f0f2f5] px-[16px] py-[5px] flex items-center justify-between border-solid border-t-[1px] border-[#e9edef]"
@@ -155,7 +206,15 @@ function typing() {
         <span><font-awesome-icon :icon="['fas', 'plus']" /></span>
       </div>
       <div class="input-text flex-grow mx-[8px]">
+        <audio
+          v-if="audioRecording || sendRecord"
+          ref="audioElement"
+          class="w-full"
+          src=""
+          controls
+        ></audio>
         <input
+          v-else
           name="search"
           placeholder="Type a message"
           class="search-box w-full h-[40px] px-[16px] bg-[#fff] rounded-md focus:outline-none"
@@ -165,12 +224,19 @@ function typing() {
         />
       </div>
       <div class="icons">
-        <span v-if="enteredMessage != ''"
+        <span
+          @click="stopRecording"
+          v-if="audioRecording && enteredMessage == ''"
+          >ss</span
+        >
+        <span v-else-if="sendRecord || enteredMessage != ''"
           ><font-awesome-icon
             @click="sendMessage"
             :icon="['fas', 'paper-plane']"
         /></span>
-        <span v-else><font-awesome-icon :icon="['fas', 'microphone']" /></span>
+        <span @click="startRecording" v-else
+          ><font-awesome-icon :icon="['fas', 'microphone']"
+        /></span>
       </div>
     </footer>
   </div>
