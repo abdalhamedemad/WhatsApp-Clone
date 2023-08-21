@@ -92,34 +92,51 @@ export const useCounterStore = defineStore("counter", () => {
   }
   async function sendMessage(message: any, toId: string, messageType: string) {
     let body: any = "";
-    if (messageType === "record") {
+    if (messageType == "record") {
       const formData = new FormData();
       //add the Blob to formData
       formData.append("record", message, "recording.mp3");
+      formData.append("userId", localStorage.getItem("userId"));
+      formData.append("token", localStorage.getItem("token"));
+      formData.append("toId", toId);
+      formData.append("messageType", "record");
       body = formData;
-    } else {
-      body = JSON.stringify({
-        message,
-        userId: localStorage.getItem("userId"),
-        token: localStorage.getItem("token"),
-        toId,
-      });
-    }
-    const { isFetching, data, error } = await useFetch(
-      "http://localhost:8080/feed/send-message",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body,
+      const { isFetching, data, error } = await useFetch(
+        "http://localhost:8080/feed/send-message",
+        {
+          method: "POST",
+          body,
+        }
+      ).json();
+      console.log(data);
+      if (data.value.status === 201) {
+        return data;
+      } else {
+        return data;
       }
-    ).json();
-    console.log(data);
-    if (data.value.status === 201) {
-      return true;
     } else {
-      return false;
+      const { isFetching, data, error } = await useFetch(
+        "http://localhost:8080/feed/send-message",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message,
+            userId: localStorage.getItem("userId"),
+            token: localStorage.getItem("token"),
+            toId,
+            messageType: "text",
+          }),
+        }
+      ).json();
+      console.log(data);
+      if (data.value.status === 201) {
+        return true;
+      } else {
+        return false;
+      }
     }
   }
   async function fetchMessages(toId: string) {

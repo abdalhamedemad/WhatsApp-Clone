@@ -40,7 +40,7 @@ onMounted(async () => {
 });
 
 /*//////////////////////////////// */
-
+let blob = null;
 const userImage = ref("");
 const enteredMessage = ref("");
 const messageData2 = ref(store.activeChat.messages);
@@ -48,10 +48,13 @@ watchEffect(() => {
   messageData2.value = store.activeChat.messages;
 });
 const sendRecord = ref(false);
-function sendMessage() {
+async function sendMessage() {
   if (sendRecord.value) {
     sendRecord.value = false;
     audioRecording.value = false;
+    // console.log("sendMessage blob", blob);
+    // store.sendMessage(blob, store.activeChat.userId, "record");
+    await saveRecording();
   } else {
     const message = enteredMessage.value;
     console.log(enteredMessage.value);
@@ -73,7 +76,7 @@ function sendMessage() {
 }
 
 onKeyStroke("Enter", (e) => {
-  sendMessage();
+  // sendMessage();
 });
 function typing() {
   console.log("typing", store.activeChat.userId);
@@ -87,7 +90,7 @@ const audioElement = ref(null);
 let mediaStream = null;
 let mediaRecorder = null;
 // define a blob to hold the recording data
-let blob = null;
+
 const startRecording = async () => {
   try {
     sendRecord.value = false;
@@ -102,7 +105,7 @@ const startRecording = async () => {
 
       console.log(audioURL);
       audioElement.value.src = audioURL;
-      await saveRecording();
+      // await saveRecording();
     };
   } catch (error) {
     audioRecording.value = false;
@@ -122,9 +125,12 @@ async function saveRecording() {
   //   }
   // ).json();
   // console.log(isFetching, "isffff");
-  store.sendMessage(blob, store.activeChat.userId, "record");
+  let data = store.sendMessage(blob, store.activeChat.userId, "record");
+  // const formData = new FormData();
+  //add the Blob to formData
   socket.emit("send-msg", {
-    message: record,
+    message: data.path,
+    type: "record",
     to: store.activeChat.userId,
   });
 }
@@ -180,23 +186,26 @@ onBeforeUnmount(() => {
     <section class="ch overflow-auto mb-[62px] pt-[20px]">
       <!-- <HomePageMessageBoxText :isMe="false" , /> -->
       <!-- <HomePageMessageBoxText :isMe="true" /> -->
-      <HomePageMessageBoxText
-        v-for="(message, index) in messageData2"
-        :key="index"
-        :messageData="{
-          message: message.body,
-          isMe: message.me,
-          time: message.time ? message.time : '2:22 pm',
-          groupMessage: message.groupMessage ? message.groupMessage : false,
-        }"
-      />
-      <HomePageMessageBoxVoice
-        :audioData="blob"
-        :messageData="{
-          isMe: true,
-          time: '2:22 pm',
-        }"
-      />
+      <div v-for="(message, index) in messageData2" :key="index">
+        <HomePageMessageBoxVoice
+          v-if="message.type == 'record'"
+          :audioData="blob"
+          :messageData="{
+            isMe: true,
+            time: '2:22 pm',
+            src: message.body,
+          }"
+        />
+        <HomePageMessageBoxText
+          v-else
+          :messageData="{
+            message: message.body,
+            isMe: message.me,
+            time: message.time ? message.time : '2:22 pm',
+            groupMessage: message.groupMessage ? message.groupMessage : false,
+          }"
+        />
+      </div>
     </section>
     <footer
       class="absolute left-0 bottom-0 w-full h-[62px] bg-[#f0f2f5] px-[16px] py-[5px] flex items-center justify-between border-solid border-t-[1px] border-[#e9edef]"

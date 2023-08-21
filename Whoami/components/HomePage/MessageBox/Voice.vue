@@ -17,6 +17,11 @@ const props = defineProps({
       required: false,
       default: "2:22 pm",
     },
+    src: {
+      type: String,
+      required: false,
+      default: "",
+    },
   },
 });
 // const videoElement = ref(null);
@@ -70,7 +75,7 @@ const props = defineProps({
     >
       <audio
         class="bg-inherit text-inherit"
-        src=""
+        :src="`http://localhost:8080/${props.messageData.src}`"
         ref="audioElement"
         controls
         :class="`${props.messageData.isMe ? 'audio-me' : 'audio-you'}`"
