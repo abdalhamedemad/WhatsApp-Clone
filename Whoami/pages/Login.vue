@@ -1,5 +1,4 @@
 <script setup>
-// import { NuxtLink } from ".nuxt/components";
 import { on } from "events";
 import { useCounterStore } from "~/stores/appStore";
 
@@ -9,7 +8,7 @@ const store = useCounterStore();
 function Login() {
   const { isFetching, data, error } = store.Login(email.value, password.value);
   if (!error && localStorage.getItem("token")) {
-    //  redirect to error page
+    //  redirect to home page
     navigateTo("/");
   } else {
     //  redirect to login page
@@ -55,6 +54,12 @@ function Login() {
               </button>
             </li>
           </ul>
+          <button
+            @click="navigateTo(`/signup`)"
+            class="bg-[#00a884] mt-[16px] w-[65px] h-[35px] text-[12px] text-white rounded-md p-2"
+          >
+            Signup
+          </button>
         </div>
       </div>
     </div>

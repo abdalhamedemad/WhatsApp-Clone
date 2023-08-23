@@ -1,6 +1,7 @@
 import { useWindowSize } from "@vueuse/core";
 import { ref, toRefs } from "vue";
 import { io } from "socket.io-client";
+import { useJwt } from "@vueuse/integrations/useJwt";
 export const useUtils = () => {
   const getScreens = () => {
     const width = useWindowSize().width;
@@ -16,22 +17,22 @@ export const useUtils = () => {
   };
   const VerifyToken = () => {
     const token = localStorage.getItem("token");
-    const tokenExpiry = localStorage.getItem("tokenExpiry");
-    if (token && tokenExpiry) {
-      // const now = new Date();
-      if (now.getTime() > tokenExpiry) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("tokenExpiry");
-        return false;
-      }
+    const now = new Date();
+    const { header, payload } = useJwt(token);
+    console.log("header", header, payload);
+    if (!token || payload.exp < now.getTime() / 1000) {
+      localStorage.removeItem("token");
+      return false;
+    } else {
+      return true;
     }
-    return token;
   };
 
   const socketComposable = async () => {
     const socket = await io("http://localhost:8080", {
       transports: ["websocket"],
     });
+    console.log("socket1");
     return socket;
   };
 

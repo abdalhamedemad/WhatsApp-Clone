@@ -75,7 +75,11 @@ const props = defineProps({
     >
       <audio
         class="bg-inherit text-inherit"
-        :src="`http://localhost:8080/${props.messageData.src}`"
+        :src="`${
+          props.messageData.src.includes('http')
+            ? props.messageData.src
+            : 'http://localhost:8080/' + props.messageData.src
+        }`"
         ref="audioElement"
         controls
         :class="`${props.messageData.isMe ? 'audio-me' : 'audio-you'}`"

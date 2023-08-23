@@ -3,16 +3,28 @@ import { onKeyStroke } from "@vueuse/core";
 import { useCounterStore } from "~/stores/appStore.ts";
 import { useUtils } from "~/composables/useUtils.js";
 import { useDevicesList, useUserMedia } from "@vueuse/core";
+// import { before } from "node:test";
 const store = useCounterStore();
 const { socketComposable } = useUtils();
+const { VerifyToken } = useUtils();
+let once = true;
 let typingShow = ref(false);
 let socket = null;
 // const audioElement = ref(null);
 // let audio = null;
+
+onBeforeMount(() => {
+  if (!VerifyToken()) {
+    // router.push("/login");
+    navigateTo("/login");
+  }
+});
 onMounted(async () => {
-  // audio = audioElement.value;
-  socket = await socketComposable();
-  console.log(socketComposable());
+  console.log("token", VerifyToken());
+  if (once) {
+    socket = await socketComposable();
+    once = false;
+  }
   socket.on("connect", () => {
     console.log("socket connect", socket.id); // x8WIv7-mJelg7on_ALbx
   });
@@ -52,9 +64,20 @@ async function sendMessage() {
   if (sendRecord.value) {
     sendRecord.value = false;
     audioRecording.value = false;
-    // console.log("sendMessage blob", blob);
+    console.log("sendMessage blob", blob);
     // store.sendMessage(blob, store.activeChat.userId, "record");
+    // const B1 = new Blob(blob);
+    const audioURL = URL.createObjectURL(blob);
+    messageData2.value.push({
+      body: audioURL,
+      me: true,
+      time: "2:22 pm",
+      groupMessage: false,
+      senderName: "New Name",
+      type: "record",
+    });
     await saveRecording();
+    console.log("sendMessage blob2", blob);
   } else {
     const message = enteredMessage.value;
     console.log(enteredMessage.value);
@@ -65,6 +88,7 @@ async function sendMessage() {
       time: "2:22 pm",
       groupMessage: false,
       senderName: "New Name",
+      type: "text",
     });
     enteredMessage.value = "";
     store.sendMessage(message, store.activeChat.userId, "text");
@@ -113,21 +137,7 @@ const startRecording = async () => {
   }
 };
 async function saveRecording() {
-  //the form data that will hold the Blob to upload
-  // const formData = new FormData();
-  // formData.append("record", blob, "recording.mp3");
-  // console.log("fetching data");
-  // const { isFetching, data, error } = await useFetch(
-  //   "http://localhost:8080/feed/record",
-  //   {
-  //     method: "POST",
-  //     body: formData,
-  //   }
-  // ).json();
-  // console.log(isFetching, "isffff");
   let data = store.sendMessage(blob, store.activeChat.userId, "record");
-  // const formData = new FormData();
-  //add the Blob to formData
   socket.emit("send-msg", {
     message: data.path,
     type: "record",

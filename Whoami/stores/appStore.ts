@@ -1,5 +1,7 @@
 import { defineStore } from "pinia";
 import { useFetch } from "@vueuse/core";
+import { useJwt } from "@vueuse/integrations/useJwt";
+
 export const useCounterStore = defineStore("counter", () => {
   const userData = ref([]);
   const activeChat = ref({
@@ -43,6 +45,18 @@ export const useCounterStore = defineStore("counter", () => {
     }
     console.log(userData);
     return { isFetching, data, error };
+  }
+  function VerifyToken() {
+    const token = localStorage.getItem("token");
+    const now = new Date();
+    const { header, payload } = useJwt(token);
+    console.log("header", header, payload);
+    if (!token || payload.exp < now.getTime() / 1000) {
+      localStorage.removeItem("token");
+      return false;
+    } else {
+      return true;
+    }
   }
   async function Login(email: string, password: string) {
     console.log("fetching login data");
@@ -170,5 +184,6 @@ export const useCounterStore = defineStore("counter", () => {
     Login,
     Signup,
     sendMessage,
+    VerifyToken,
   };
 });
